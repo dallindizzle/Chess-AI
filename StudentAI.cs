@@ -1,0 +1,361 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using UvsChess;
+
+namespace StudentAI
+{
+    public class StudentAI : IChessAI
+    {
+        #region IChessAI Members that are implemented by the Student
+
+        /// <summary>
+        /// The name of your AI
+        /// </summary>
+        public string Name
+        {
+#if DEBUG
+            get { return "Group 12 (Debug)"; }
+#else
+            get { return "Group 12"; }
+#endif
+        }
+
+        /// <summary>
+        /// Evaluates the chess board and decided which move to make. This is the main method of the AI.
+        /// The framework will call this method when it's your turn.
+        /// </summary>
+        /// <param name="board">Current chess board</param>
+        /// <param name="yourColor">Your color</param>
+        /// <returns> Returns the best chess move the player has for the given chess board</returns>
+        public ChessMove GetNextMove(ChessBoard board, ChessColor myColor)
+        {
+            //for (int x = 0; x < 8; x++)
+            //{
+            //    for (int y = 0; y < 8; y++)
+            //    {
+            //        if (board[x, y] == ChessPiece.WhitePawn)
+            //            return GenMove(board, new ChessLocation(x, y));
+            //    }
+            //}
+
+            List<ChessMove> moves = GetMoves(board, myColor);
+            return moves[random.Next(moves.Count)];
+
+            throw (new NotImplementedException());
+        }
+
+        /// <summary>
+        /// Validates a move. The framework uses this to validate the opponents move.
+        /// </summary>
+        /// <param name="boardBeforeMove">The board as it currently is _before_ the move.</param>
+        /// <param name="moveToCheck">This is the move that needs to be checked to see if it's valid.</param>
+        /// <param name="colorOfPlayerMoving">This is the color of the player who's making the move.</param>
+        /// <returns>Returns true if the move was valid</returns>
+        public bool IsValidMove(ChessBoard boardBeforeMove, ChessMove moveToCheck, ChessColor colorOfPlayerMoving)
+        {
+            int x = moveToCheck.From.X;
+            int y = moveToCheck.From.Y;
+            int xc = moveToCheck.To.X;
+            int yc = moveToCheck.To.Y;
+
+            if (colorOfPlayerMoving == ChessColor.White)
+            {
+                if (boardBeforeMove[x, y] == ChessPiece.WhitePawn)
+                {
+                    if (y == 6 && yc == y - 2 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
+                    else if (x == xc && yc == y - 1 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
+                    else if (xc == x - 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true; // If curTile < BlankTile then black. Opposite of slides
+                    else if (xc == x + 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true;
+                    return false;
+                }
+                else if (boardBeforeMove[x,y] == ChessPiece.WhiteRook)
+                {
+                    if (boardBeforeMove[xc, yc] > ChessPiece.Empty) return false;
+                    if (yc != y && xc != x) return false;
+
+                    if (xc == x)
+                    {
+                        if (yc > y)
+                        {
+                            for (int i = y + 1; i < yc; i++)
+                            {
+                                if (boardBeforeMove[x, i] != ChessPiece.Empty) return false;
+                            }
+                        }
+                        else
+                        {
+                            for (int i = y - 1; i > yc; i--)
+                            {
+                                if (boardBeforeMove[x, i] != ChessPiece.Empty) return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (xc > x)
+                        {
+                            for (int i = x + 1; i < xc; i++)
+                            {
+                                if (boardBeforeMove[i, y] != ChessPiece.Empty) return false;
+                            }
+                        }
+                        else
+                        {
+                            for (int i = x - 1; i > xc; i--)
+                            {
+                                if (boardBeforeMove[i, y] != ChessPiece.Empty) return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
+            }
+
+            throw (new NotImplementedException());
+        }
+
+        #endregion
+
+
+        private Random random = new Random();
+
+        private List<ChessLocation> GetPieces(ChessBoard board, ChessColor myColor)
+        {
+            List<ChessLocation> pieces = new List<ChessLocation>();
+
+            if (myColor == ChessColor.White)
+            {
+                for (int x = 0; x < ChessBoard.NumberOfColumns; x++)
+                {
+                    for (int y = 0; y < ChessBoard.NumberOfRows; y++)
+                    {
+                        if (board[x, y] == ChessPiece.WhiteBishop || board[x, y] == ChessPiece.WhiteKing || board[x, y] == ChessPiece.WhiteKnight || board[x, y] == ChessPiece.WhitePawn || board[x, y] == ChessPiece.WhiteQueen || board[x, y] == ChessPiece.WhiteRook)
+                            pieces.Add(new ChessLocation(x, y));
+                    }
+                }
+            }
+            else
+            {
+                for (int x = 0; x < ChessBoard.NumberOfColumns; x++)
+                {
+                    for (int y = 0; y < ChessBoard.NumberOfRows; y++)
+                    {
+                        if (board[x, y] == ChessPiece.BlackBishop || board[x, y] == ChessPiece.BlackKing || board[x, y] == ChessPiece.BlackKnight || board[x, y] == ChessPiece.BlackPawn || board[x, y] == ChessPiece.BlackQueen || board[x, y] == ChessPiece.BlackRook)
+                            pieces.Add(new ChessLocation(x, y));
+                    }
+                }
+            }
+
+            return pieces;
+        }
+
+        private List<ChessMove> GetMoves(ChessBoard board, ChessColor myColor)
+        {
+            var pieces = GetPieces(board, myColor);
+            List<ChessMove> moves = new List<ChessMove>();
+
+            foreach (var piece in pieces)
+            {
+                moves.AddRange(GenMoves(board, piece));
+            }
+
+            return moves;
+        }
+
+        private List<ChessMove> GenMoves(ChessBoard board, ChessLocation location)
+        {
+            List<ChessMove> potMoves = new List<ChessMove>();
+
+            int x = location.X;
+            int y = location.Y;
+
+            if (board[x, y] == ChessPiece.WhitePawn)
+            {
+                if (y == 6) potMoves.Add(new ChessMove(new ChessLocation(x,y), new ChessLocation(x, y - 2)));
+                else if (y - 1 > -1)
+                {
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
+                    if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y - 1)));
+                    if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y - 1)));
+                }
+            }
+            else if (board[x, y] == ChessPiece.BlackPawn)
+            {
+                if (y == 1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 2)));
+                else if (y + 1 < 8)
+                {
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 1)));
+                    if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 1)));
+                    if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 1)));
+                }
+            }
+            else if (board[x,y] == ChessPiece.WhiteRook || board[x, y] == ChessPiece.BlackRook)
+            {
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (i == x) continue;
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(i, y)));
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    if (i == y) continue;
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, i)));
+                }
+
+            }
+            else if (board[x,y] == ChessPiece.WhiteBishop || board[x, y] == ChessPiece.BlackBishop)
+            {
+
+                int bx = x + 1;
+                int by = y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by++)));
+
+                bx = x - 1;
+                by = y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx--, by--)));
+
+                bx = x - 1;
+                by = y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx--, by++)));
+
+                bx = x + 1;
+                by = y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by--)));
+
+            }
+            else if (board[x,y] == ChessPiece.WhiteKnight || board[x, y] == ChessPiece.BlackKnight)
+            {
+                if (x + 2 < 8)
+                {
+                    if (y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 2, y + 1)));
+                    if (y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 2, y - 1)));
+                }
+                if (y - 2 > -1)
+                {
+                    if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y - 2)));
+                    if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y - 2)));
+                }
+                if (x - 2 > -1)
+                {
+                    if (y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 2, y - 1)));
+                    if (y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 2, y + 1)));
+                }
+                if (y + 2 < 8)
+                {
+                    if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 2)));
+                    if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 2)));
+                }
+            }
+            else if (board[x,y] == ChessPiece.WhiteQueen || board[x, y] == ChessPiece.BlackQueen)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    if (i == x) continue;
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(i, y)));
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    if (i == y) continue;
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, i)));
+                }
+
+                int bx = x + 1;
+                int by = y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by++)));
+
+                bx = x - 1;
+                by = y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx--, by--)));
+
+                bx = x - 1;
+                by = y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx--, by++)));
+
+                bx = x + 1;
+                by = y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                    potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by--)));
+            }
+            else if (board[x,y] == ChessPiece.WhiteKing || board[x, y] == ChessPiece.BlackKing)
+            {
+                if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y)));
+                if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y)));
+                if (y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 1)));
+                if (y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
+            }
+            return potMoves;
+        }
+
+
+
+
+
+
+
+
+
+
+        #region IChessAI Members that should be implemented as automatic properties and should NEVER be touched by students.
+        /// <summary>
+        /// This will return false when the framework starts running your AI. When the AI's time has run out,
+        /// then this method will return true. Once this method returns true, your AI should return a 
+        /// move immediately.
+        /// 
+        /// You should NEVER EVER set this property!
+        /// This property should be defined as an Automatic Property.
+        /// This property SHOULD NOT CONTAIN ANY CODE!!!
+        /// </summary>
+        public AIIsMyTurnOverCallback IsMyTurnOver { get; set; }
+
+        /// <summary>
+        /// Call this method to print out debug information. The framework subscribes to this event
+        /// and will provide a log window for your debug messages.
+        /// 
+        /// You should NEVER EVER set this property!
+        /// This property should be defined as an Automatic Property.
+        /// This property SHOULD NOT CONTAIN ANY CODE!!!
+        /// </summary>
+        /// <param name="message"></param>
+        public AILoggerCallback Log { get; set; }
+
+        /// <summary>
+        /// Call this method to catch profiling information. The framework subscribes to this event
+        /// and will print out the profiling stats in your log window.
+        /// 
+        /// You should NEVER EVER set this property!
+        /// This property should be defined as an Automatic Property.
+        /// This property SHOULD NOT CONTAIN ANY CODE!!!
+        /// </summary>
+        /// <param name="key"></param>
+        public AIProfiler Profiler { get; set; }
+
+        /// <summary>
+        /// Call this method to tell the framework what decision print out debug information. The framework subscribes to this event
+        /// and will provide a debug window for your decision tree.
+        /// 
+        /// You should NEVER EVER set this property!
+        /// This property should be defined as an Automatic Property.
+        /// This property SHOULD NOT CONTAIN ANY CODE!!!
+        /// </summary>
+        /// <param name="message"></param>
+        public AISetDecisionTreeCallback SetDecisionTree { get; set; }
+        #endregion
+    }
+}
