@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UvsChess;
+using System.Linq;
 
 namespace StudentAI
 {
@@ -61,19 +62,199 @@ namespace StudentAI
 
             if (colorOfPlayerMoving == ChessColor.White)
             {
+                if (boardBeforeMove[xc, yc] > ChessPiece.Empty) return false;
+
                 if (boardBeforeMove[x, y] == ChessPiece.WhitePawn)
                 {
-                    if (y == 6 && yc == y - 2 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
+                    if (xc > x && yc < y + 1 || xc < x && yc < y - 1) return false;
+
+                    if (y == 6 && yc == y - 2 && boardBeforeMove[xc, yc + 1] == ChessPiece.Empty) return true;
                     else if (x == xc && yc == y - 1 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
                     else if (xc == x - 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true; // If curTile < BlankTile then black. Opposite of slides
                     else if (xc == x + 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true;
                     return false;
                 }
-                else if (boardBeforeMove[x,y] == ChessPiece.WhiteRook)
-                {
-                    if (boardBeforeMove[xc, yc] > ChessPiece.Empty) return false;
-                    if (yc != y && xc != x) return false;
 
+            }
+            else
+            {
+                if (boardBeforeMove[xc, yc] < ChessPiece.Empty) return false;
+
+                if (boardBeforeMove[x, y] == ChessPiece.BlackPawn)
+                {
+                    if (xc > x && yc > y - 1 || xc < x && yc > y + 1) return false;
+
+                    if (y == 1 && yc == y + 2 && boardBeforeMove[xc, yc - 1] == ChessPiece.Empty) return true;
+                    else if (x == xc && yc == y + 1 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
+                    else if (xc == x - 1 && yc == y + 1 && boardBeforeMove[xc, yc] > ChessPiece.Empty) return true; // If curTile > BlankTile then white. Opposite of slides
+                    else if (xc == x + 1 && yc == y + 1 && boardBeforeMove[xc, yc] > ChessPiece.Empty) return true;
+                    return false;
+                }
+            }
+
+            if (boardBeforeMove[x, y] == ChessPiece.WhiteRook || boardBeforeMove[x, y] == ChessPiece.BlackRook)
+            {
+                if (yc != y && xc != x) return false;
+
+                if (xc == x)
+                {
+                    if (yc > y)
+                    {
+                        for (int i = y + 1; i < yc; i++)
+                        {
+                            if (boardBeforeMove[x, i] != ChessPiece.Empty) return false;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = y - 1; i > yc; i--)
+                        {
+                            if (boardBeforeMove[x, i] != ChessPiece.Empty) return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (xc > x)
+                    {
+                        for (int i = x + 1; i < xc; i++)
+                        {
+                            if (boardBeforeMove[i, y] != ChessPiece.Empty) return false;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = x - 1; i > xc; i--)
+                        {
+                            if (boardBeforeMove[i, y] != ChessPiece.Empty) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            else if (boardBeforeMove[x, y] == ChessPiece.WhiteBishop || boardBeforeMove[x, y] == ChessPiece.BlackBishop)
+            {
+                if (Math.Abs(x - xc) != Math.Abs(y - yc)) return false;
+
+                if (xc > x && yc < y)
+                {
+                    int i = x + 1;
+                    int j = y - 1;
+                    while (i != xc && j != yc)
+                    {
+                        if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                        i++;
+                        j--;
+                    }
+                }
+                else if (xc < x && yc < y)
+                {
+                    int i = x - 1;
+                    int j = y - 1;
+                    while (i != xc && j != yc)
+                    {
+                        if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                        i--;
+                        j--;
+                    }
+                }
+                else if (xc < x && yc > y)
+                {
+                    int i = x - 1;
+                    int j = y + 1;
+                    while (i != xc && j != yc)
+                    {
+                        if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                        i--;
+                        j++;
+                    }
+                }
+                else if (xc > x && yc > y)
+                {
+                    int i = x + 1;
+                    int j = y + 1;
+                    while (i != xc && j != yc)
+                    {
+                        if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                        i++;
+                        j++;
+                    }
+                }
+
+                return true;
+            }
+
+            else if (boardBeforeMove[x, y] == ChessPiece.WhiteKnight || boardBeforeMove[x, y] == ChessPiece.BlackKnight)
+            {
+                if (xc == x - 1 && yc == y - 2) return true;
+                else if (xc == x + 1 && yc == y - 2) return true;
+
+                else if (xc == x + 2 && yc == y - 1) return true;
+                else if (xc == x + 2 && yc == y + 1) return true;
+
+                else if (xc == x + 1 && yc == y + 2) return true;
+                else if (xc == x - 1 && yc == y + 2) return true;
+
+                else if (xc == x - 2 && yc == y - 1) return true;
+                else if (xc == x - 2 && yc == y + 1) return true;
+
+                return false;
+            }
+
+            else if (boardBeforeMove[x, y] == ChessPiece.WhiteQueen || boardBeforeMove[x, y] == ChessPiece.BlackQueen)
+            {
+                if (Math.Abs(x - xc) == Math.Abs(y - yc))
+                {
+                    if (xc > x && yc < y)
+                    {
+                        int i = x + 1;
+                        int j = y - 1;
+                        while (i != xc && j != yc)
+                        {
+                            if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                            i++;
+                            j--;
+                        }
+                    }
+                    else if (xc < x && yc < y)
+                    {
+                        int i = x - 1;
+                        int j = y - 1;
+                        while (i != xc && j != yc)
+                        {
+                            if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                            i--;
+                            j--;
+                        }
+                    }
+                    else if (xc < x && yc > y)
+                    {
+                        int i = x - 1;
+                        int j = y + 1;
+                        while (i != xc && j != yc)
+                        {
+                            if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                            i--;
+                            j++;
+                        }
+                    }
+                    else if (xc > x && yc > y)
+                    {
+                        int i = x + 1;
+                        int j = y + 1;
+                        while (i != xc && j != yc)
+                        {
+                            if (boardBeforeMove[i, j] != ChessPiece.Empty) return false;
+                            i++;
+                            j++;
+                        }
+                    }
+                    return true;
+                }
+
+                else if (yc == y || xc == x)
+                {
                     if (xc == x)
                     {
                         if (yc > y)
@@ -110,7 +291,22 @@ namespace StudentAI
                     }
                     return true;
                 }
+                return false;
             }
+
+            else if (boardBeforeMove[x, y] == ChessPiece.WhiteKing || boardBeforeMove[x, y] == ChessPiece.BlackKing)
+            {
+                if (xc == x && yc == y + 1) return true;
+                if (xc == x && yc == y - 1) return true;
+                if (xc == x + 1 && yc == y) return true;
+                if (xc == x - 1 && yc == y) return true;
+                if (xc == x + 1 && yc == y + 1) return true;
+                if (xc == x - 1 && yc == y + 1) return true;
+                if (xc == x + 1 && yc == y - 1) return true;
+                if (xc == x - 1 && yc == y - 1) return true;
+                return false;
+            }
+            
 
             throw (new NotImplementedException());
         }
@@ -157,13 +353,13 @@ namespace StudentAI
 
             foreach (var piece in pieces)
             {
-                moves.AddRange(GenMoves(board, piece));
+                moves.AddRange(GenMoves(board, piece, myColor));
             }
 
             return moves;
         }
 
-        private List<ChessMove> GenMoves(ChessBoard board, ChessLocation location)
+        private List<ChessMove> GenMoves(ChessBoard board, ChessLocation location, ChessColor myColor)
         {
             List<ChessMove> potMoves = new List<ChessMove>();
 
@@ -300,7 +496,10 @@ namespace StudentAI
                 if (y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 1)));
                 if (y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
             }
-            return potMoves;
+
+            List<ChessMove> validMoves = potMoves.Where(move => IsValidMove(board, move, myColor)).ToList();
+
+            return validMoves;
         }
 
 
