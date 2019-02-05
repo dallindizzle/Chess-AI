@@ -356,7 +356,9 @@ namespace StudentAI
                 moves.AddRange(GenMoves(board, piece, myColor));
             }
 
-            return moves;
+            var validMoves = moves.Where(move => !InCheck(board, move, myColor)).ToList(); 
+
+            return validMoves;
         }
 
         private List<ChessMove> GenMoves(ChessBoard board, ChessLocation location, ChessColor myColor)
@@ -495,11 +497,129 @@ namespace StudentAI
                 if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y)));
                 if (y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 1)));
                 if (y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
+                if (x + 1 < 8 && y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 1)));
+                if (x - 1 > -1 && y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y - 1)));
+                if (x + 1 < 8 && y - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y - 1)));
+                if (x - 1 > -1 && y + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 1)));
             }
 
             List<ChessMove> validMoves = potMoves.Where(move => IsValidMove(board, move, myColor)).ToList();
 
             return validMoves;
+        }
+
+
+        // Returns true if with the move made, the king will be in check
+        private bool InCheck(ChessBoard board, ChessMove move, ChessColor myColor)
+        {
+            var fboard = board.Clone(); // Future board. board if the move is made
+            fboard.MakeMove(move);
+            ChessLocation kingLoc = FindKing(fboard, myColor);
+
+            if (myColor == ChessColor.White)
+            {
+
+                // Check for Enemy Queen and Rook
+                for (int x = kingLoc.X + 1; x < 8; x++ )
+                {
+                    if (fboard[x, kingLoc.Y] == ChessPiece.BlackRook || fboard[x, kingLoc.Y] == ChessPiece.BlackQueen) return true;
+                    if (fboard[x, kingLoc.Y] != ChessPiece.Empty) break; // If its any other piece then we're good
+                }
+
+                for (int x = kingLoc.X - 1; x > -1; x--)
+                {
+                    if (fboard[x, kingLoc.Y] == ChessPiece.BlackRook || fboard[x, kingLoc.Y] == ChessPiece.BlackQueen) return true;
+                    if (fboard[x, kingLoc.Y] != ChessPiece.Empty) break; // If its any other piece then we're good
+                }
+
+                for (int y = kingLoc.Y + 1; y < 8; y++)
+                {
+                    if (fboard[kingLoc.X, y] == ChessPiece.BlackRook || fboard[kingLoc.X, y] == ChessPiece.BlackQueen) return true;
+                    if (fboard[kingLoc.X, y] != ChessPiece.Empty) break;
+                }
+
+                for (int y = kingLoc.Y - 1; y > -1; y--)
+                {
+                    if (fboard[kingLoc.X, y] == ChessPiece.BlackRook || fboard[kingLoc.X, y] == ChessPiece.BlackQueen) return true;
+                    if (fboard[kingLoc.X, y] != ChessPiece.Empty) break;
+                }
+
+                // Check for Enemy Queen and Bishop
+                int bx = kingLoc.X + 1;
+                int by = kingLoc.Y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.BlackQueen || fboard[bx, by] == ChessPiece.BlackBishop) return true;
+                    if (fboard[bx++, by++] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X - 1;
+                by = kingLoc.Y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.BlackQueen || fboard[bx, by] == ChessPiece.BlackBishop) return true;
+                    if (fboard[bx--, by--] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X - 1;
+                by = kingLoc.Y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.BlackQueen || fboard[bx, by] == ChessPiece.BlackBishop) return true;
+                    if (fboard[bx--, by++] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X + 1;
+                by = kingLoc.Y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.BlackQueen || fboard[bx, by] == ChessPiece.BlackBishop) return true;
+                    if (fboard[bx++, by--] != ChessPiece.Empty) break;
+                }
+
+
+            }
+
+            return false;
+        }
+
+        private ChessLocation FindKing(ChessBoard board, ChessColor myColor)
+        {
+            ChessLocation kingLoc = new ChessLocation(0,0);
+            if (myColor == ChessColor.White)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
+                    {
+                        if (board[x, y] == ChessPiece.WhiteKing)
+                        {
+                            kingLoc.X = x;
+                            kingLoc.Y = y;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
+                    {
+                        if (board[x, y] == ChessPiece.BlackKing)
+                        {
+                            kingLoc.X = x;
+                            kingLoc.Y = y;
+                        }
+                    }
+                }
+            }
+
+            return kingLoc;
         }
 
 
