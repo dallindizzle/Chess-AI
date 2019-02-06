@@ -356,7 +356,7 @@ namespace StudentAI
                 moves.AddRange(GenMoves(board, piece, myColor));
             }
 
-            var validMoves = moves.Where(move => !InCheck(board, move, myColor)).ToList();
+            var validMoves = moves.Where(move => !InCheck(board, move, myColor)).ToList(); // Filters moves that put us into check
 
             if (validMoves.Count == 0)
                 Math.Abs(9);
