@@ -66,9 +66,9 @@ namespace StudentAI
 
                 if (boardBeforeMove[x, y] == ChessPiece.WhitePawn)
                 {
-                    if (xc > x && yc < y + 1 || xc < x && yc < y - 1) return false;
+                    if (xc == x + 1 && yc == y - 1 || xc == x - 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true;
 
-                    if (y == 6 && yc == y - 2 && boardBeforeMove[xc, yc + 1] == ChessPiece.Empty) return true;
+                    if (y == 6 && yc == y - 2 && xc == x && boardBeforeMove[xc, yc + 1] == ChessPiece.Empty && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
                     else if (x == xc && yc == y - 1 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
                     else if (xc == x - 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true; // If curTile < BlankTile then black. Opposite of slides
                     else if (xc == x + 1 && yc == y - 1 && boardBeforeMove[xc, yc] < ChessPiece.Empty) return true;
@@ -82,9 +82,9 @@ namespace StudentAI
 
                 if (boardBeforeMove[x, y] == ChessPiece.BlackPawn)
                 {
-                    if (xc > x && yc > y - 1 || xc < x && yc > y + 1) return false;
+                    if (xc == x + 1 && yc == y + 1 || xc == x - 1 && yc == y + 1 && boardBeforeMove[xc, yc] > ChessPiece.Empty) return true;
 
-                    if (y == 1 && yc == y + 2 && boardBeforeMove[xc, yc - 1] == ChessPiece.Empty) return true;
+                    if (y == 1 && yc == y + 2 && x == xc && boardBeforeMove[xc, yc - 1] == ChessPiece.Empty && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
                     else if (x == xc && yc == y + 1 && boardBeforeMove[xc, yc] == ChessPiece.Empty) return true;
                     else if (xc == x - 1 && yc == y + 1 && boardBeforeMove[xc, yc] > ChessPiece.Empty) return true; // If curTile > BlankTile then white. Opposite of slides
                     else if (xc == x + 1 && yc == y + 1 && boardBeforeMove[xc, yc] > ChessPiece.Empty) return true;
@@ -376,7 +376,7 @@ namespace StudentAI
                 if (y - 1 > -1 && board[x, y - 1] == ChessPiece.Empty) 
                 {
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
-                    if (y == 6 && board[x, y - 2] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 2)));
+                    if (y == 6 && board[x, y - 2] == ChessPiece.Empty && board[x, y + 1] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 2)));
                 }
                 if (x - 1 > -1 && y - 1 > -1 && board[x - 1, y - 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y - 1)));
                 if (x + 1 < 8 && y - 1 > -1 && board[x + 1, y - 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y - 1)));
@@ -386,10 +386,10 @@ namespace StudentAI
                 if (y + 1 < 8 && board[x, y + 1] == ChessPiece.Empty)
                 {
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 1)));
-                    if (y == 2 && board[x, y + 2] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 2)));
+                    if (y == 1 && board[x, y + 2] == ChessPiece.Empty && board[x, y + 1] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y + 2)));
                 }
-                if (x - 1 > -1 && y + 1 < 8 && board[x - 1, y + 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 1)));
-                if (x + 1 < 8 && y + 1 < 8 && board[x + 1, y + 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 1)));
+                if (x - 1 > -1 && y + 1 < 8 && board[x - 1, y + 1] > ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 1)));
+                if (x + 1 < 8 && y + 1 < 8 && board[x + 1, y + 1] > ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 1)));
             }
             else if (board[x,y] == ChessPiece.WhiteRook || board[x, y] == ChessPiece.BlackRook)
             {
@@ -522,6 +522,10 @@ namespace StudentAI
             if (myColor == ChessColor.White)
             {
 
+                // Check for black pawns
+                if (kingLoc.X - 1 > -1 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X - 1, kingLoc.Y - 1] == ChessPiece.BlackPawn) return true;
+                if (kingLoc.X + 1 < 8 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X + 1, kingLoc.Y - 1] == ChessPiece.BlackPawn) return true;
+
                 // Check for Enemy Queen and Rook
                 for (int x = kingLoc.X + 1; x < 8; x++ )
                 {
@@ -593,6 +597,84 @@ namespace StudentAI
                 if (kingLoc.X + 1 < 8 && kingLoc.Y - 2 > -1 && fboard[kingLoc.X + 1, kingLoc.Y - 2] == ChessPiece.BlackKnight) return true;
                 if (kingLoc.X - 1 > -1 && kingLoc.Y + 2 < 8 && fboard[kingLoc.X - 1, kingLoc.Y + 2] == ChessPiece.BlackKnight) return true;
                 if (kingLoc.X + 1 < 8 && kingLoc.Y + 2 < 8 && fboard[kingLoc.X + 1, kingLoc.Y + 2] == ChessPiece.BlackKnight) return true;
+            }
+            else
+            {
+                // Check for White pawns
+                if (kingLoc.X - 1 > -1 && kingLoc.Y + 1 < 8 && fboard[kingLoc.X - 1, kingLoc.Y + 1] == ChessPiece.WhitePawn) return true;
+                if (kingLoc.X + 1 < 8 && kingLoc.Y + 1 < 8 && fboard[kingLoc.X + 1, kingLoc.Y + 1] == ChessPiece.WhitePawn) return true;
+
+                // Check for Enemy Queen and Rook
+                for (int x = kingLoc.X + 1; x < 8; x++)
+                {
+                    if (fboard[x, kingLoc.Y] == ChessPiece.WhiteRook || fboard[x, kingLoc.Y] == ChessPiece.WhiteQueen) return true;
+                    if (fboard[x, kingLoc.Y] != ChessPiece.Empty) break; // If its any other piece then we're good
+                }
+
+                for (int x = kingLoc.X - 1; x > -1; x--)
+                {
+                    if (fboard[x, kingLoc.Y] == ChessPiece.WhiteRook || fboard[x, kingLoc.Y] == ChessPiece.WhiteQueen) return true;
+                    if (fboard[x, kingLoc.Y] != ChessPiece.Empty) break; // If its any other piece then we're good
+                }
+
+                for (int y = kingLoc.Y + 1; y < 8; y++)
+                {
+                    if (fboard[kingLoc.X, y] == ChessPiece.WhiteRook || fboard[kingLoc.X, y] == ChessPiece.WhiteQueen) return true;
+                    if (fboard[kingLoc.X, y] != ChessPiece.Empty) break;
+                }
+
+                for (int y = kingLoc.Y - 1; y > -1; y--)
+                {
+                    if (fboard[kingLoc.X, y] == ChessPiece.WhiteRook || fboard[kingLoc.X, y] == ChessPiece.WhiteQueen) return true;
+                    if (fboard[kingLoc.X, y] != ChessPiece.Empty) break;
+                }
+
+                // Check for Enemy Queen and Bishop
+                int bx = kingLoc.X + 1;
+                int by = kingLoc.Y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.WhiteQueen || fboard[bx, by] == ChessPiece.WhiteBishop) return true;
+                    if (fboard[bx++, by++] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X - 1;
+                by = kingLoc.Y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.WhiteQueen || fboard[bx, by] == ChessPiece.WhiteBishop) return true;
+                    if (fboard[bx--, by--] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X - 1;
+                by = kingLoc.Y + 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.WhiteQueen || fboard[bx, by] == ChessPiece.WhiteBishop) return true;
+                    if (fboard[bx--, by++] != ChessPiece.Empty) break;
+                }
+
+                bx = kingLoc.X + 1;
+                by = kingLoc.Y - 1;
+
+                while (bx > -1 && by > -1 && bx < 8 && by < 8)
+                {
+                    if (fboard[bx, by] == ChessPiece.WhiteQueen || fboard[bx, by] == ChessPiece.WhiteBishop) return true;
+                    if (fboard[bx++, by--] != ChessPiece.Empty) break;
+                }
+
+                //Check for Knight
+                if (kingLoc.X + 2 < 8 && kingLoc.Y + 1 < 8 && fboard[kingLoc.X + 2, kingLoc.Y + 1] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X + 2 < 8 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X + 2, kingLoc.Y - 1] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X - 2 > -1 && kingLoc.Y + 1 < 8 && fboard[kingLoc.X - 2, kingLoc.Y + 1] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X - 2 > -1 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X - 2, kingLoc.Y - 1] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X - 1 > -1 && kingLoc.Y - 2 > -1 && fboard[kingLoc.X - 1, kingLoc.Y - 2] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X + 1 < 8 && kingLoc.Y - 2 > -1 && fboard[kingLoc.X + 1, kingLoc.Y - 2] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X - 1 > -1 && kingLoc.Y + 2 < 8 && fboard[kingLoc.X - 1, kingLoc.Y + 2] == ChessPiece.WhiteKnight) return true;
+                if (kingLoc.X + 1 < 8 && kingLoc.Y + 2 < 8 && fboard[kingLoc.X + 1, kingLoc.Y + 2] == ChessPiece.WhiteKnight) return true;
             }
 
             return false;
