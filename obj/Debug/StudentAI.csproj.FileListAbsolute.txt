@@ -4,3 +4,10 @@ C:\Users\dcs37_000\Documents\CS4470\uvschess-master\uvschess\Framework\bin\Debug
 C:\Users\dcs37_000\Documents\CS4470\uvschess-master\uvschess\Framework\bin\Debug\StudentAI.pdb
 C:\Users\dcs37_000\Documents\CS4470\uvschess-master\uvschess\StudentAI\obj\Debug\StudentAI.dll
 C:\Users\dcs37_000\Documents\CS4470\uvschess-master\uvschess\StudentAI\obj\Debug\StudentAI.pdb
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\Framework\bin\Debug\StudentAI.dll
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\Framework\bin\Debug\StudentAI.pdb
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Debug\StudentAI.csprojAssemblyReference.cache
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Debug\StudentAI.csproj.CoreCompileInputs.cache
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Debug\StudentAI.csproj.CopyComplete
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Debug\StudentAI.dll
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Debug\StudentAI.pdb
