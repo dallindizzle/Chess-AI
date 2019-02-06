@@ -512,7 +512,7 @@ namespace StudentAI
         // Returns true if with the move made, the king will be in check
         private bool InCheck(ChessBoard board, ChessMove move, ChessColor myColor)
         {
-            var fboard = board.Clone(); // Future board. board if the move is made
+            var fboard = board.Clone(); // Future board. board if the move is made. MAKE SURE TO USE THIS BOARD IN THIS METHOD!!!
             fboard.MakeMove(move);
             ChessLocation kingLoc = FindKing(fboard, myColor);
 
