@@ -22,6 +22,8 @@ namespace StudentAI
 #endif
         }
 
+        private List<ChessMove> visited = new List<ChessMove>();
+
         /// <summary>
         /// Evaluates the chess board and decided which move to make. This is the main method of the AI.
         /// The framework will call this method when it's your turn.
@@ -41,9 +43,28 @@ namespace StudentAI
             //}
 
             List<ChessMove> moves = GetMoves(board, myColor);
-            return moves[random.Next(moves.Count)];
-
+            return GreedyMoves(moves);
             throw (new NotImplementedException());
+        }
+
+        private ChessMove GreedyMoves(List<ChessMove> moves)
+        {
+            ChessMove tempMove = moves.OrderByDescending(move => move.ValueOfMove).First();
+
+            while (visited.Contains(tempMove))
+            {
+                moves.Remove(tempMove);
+                tempMove = moves.OrderByDescending(move => move.ValueOfMove).First();
+            }
+
+            if(visited.Count > 2)
+            {
+                visited.RemoveAt(0);
+            }
+
+            visited.Add(tempMove);
+
+            return tempMove;
         }
 
         /// <summary>
@@ -306,7 +327,7 @@ namespace StudentAI
                 if (xc == x - 1 && yc == y - 1) return true;
                 return false;
             }
-            
+
 
             throw (new NotImplementedException());
         }
@@ -402,7 +423,7 @@ namespace StudentAI
 
             if (board[x, y] == ChessPiece.WhitePawn)
             {
-                if (y - 1 > -1 && board[x, y - 1] == ChessPiece.Empty) 
+                if (y - 1 > -1 && board[x, y - 1] == ChessPiece.Empty)
                 {
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
                     if (y == 6 && board[x, y - 2] == ChessPiece.Empty && board[x, y + 1] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 2)));
@@ -420,7 +441,7 @@ namespace StudentAI
                 if (x - 1 > -1 && y + 1 < 8 && board[x - 1, y + 1] > ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y + 1)));
                 if (x + 1 < 8 && y + 1 < 8 && board[x + 1, y + 1] > ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 1)));
             }
-            else if (board[x,y] == ChessPiece.WhiteRook || board[x, y] == ChessPiece.BlackRook)
+            else if (board[x, y] == ChessPiece.WhiteRook || board[x, y] == ChessPiece.BlackRook)
             {
 
                 for (int i = 0; i < 8; i++)
@@ -435,7 +456,7 @@ namespace StudentAI
                 }
 
             }
-            else if (board[x,y] == ChessPiece.WhiteBishop || board[x, y] == ChessPiece.BlackBishop)
+            else if (board[x, y] == ChessPiece.WhiteBishop || board[x, y] == ChessPiece.BlackBishop)
             {
 
                 int bx = x + 1;
@@ -463,7 +484,7 @@ namespace StudentAI
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by--)));
 
             }
-            else if (board[x,y] == ChessPiece.WhiteKnight || board[x, y] == ChessPiece.BlackKnight)
+            else if (board[x, y] == ChessPiece.WhiteKnight || board[x, y] == ChessPiece.BlackKnight)
             {
                 if (x + 2 < 8)
                 {
@@ -486,7 +507,7 @@ namespace StudentAI
                     if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y + 2)));
                 }
             }
-            else if (board[x,y] == ChessPiece.WhiteQueen || board[x, y] == ChessPiece.BlackQueen)
+            else if (board[x, y] == ChessPiece.WhiteQueen || board[x, y] == ChessPiece.BlackQueen)
             {
                 for (int i = 0; i < 8; i++)
                 {
@@ -523,7 +544,7 @@ namespace StudentAI
                 while (bx > -1 && by > -1 && bx < 8 && by < 8)
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(bx++, by--)));
             }
-            else if (board[x,y] == ChessPiece.WhiteKing || board[x, y] == ChessPiece.BlackKing)
+            else if (board[x, y] == ChessPiece.WhiteKing || board[x, y] == ChessPiece.BlackKing)
             {
                 if (x + 1 < 8) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y)));
                 if (x - 1 > -1) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y)));
@@ -556,7 +577,7 @@ namespace StudentAI
                 if (kingLoc.X + 1 < 8 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X + 1, kingLoc.Y - 1] == ChessPiece.BlackPawn) return true;
 
                 // Check for Enemy Queen and Rook
-                for (int x = kingLoc.X + 1; x < 8; x++ )
+                for (int x = kingLoc.X + 1; x < 8; x++)
                 {
                     if (fboard[x, kingLoc.Y] == ChessPiece.BlackRook || fboard[x, kingLoc.Y] == ChessPiece.BlackQueen) return true;
                     if (fboard[x, kingLoc.Y] != ChessPiece.Empty) break; // If its any other piece then we're good
@@ -630,7 +651,7 @@ namespace StudentAI
                 // Check for King
                 if (kingLoc.X + 1 < 8 && fboard[kingLoc.X + 1, kingLoc.Y] == ChessPiece.BlackKing) return true;
                 if (kingLoc.X - 1 > -1 && fboard[kingLoc.X - 1, kingLoc.Y] == ChessPiece.BlackKing) return true;
-                if (kingLoc.Y + 1 < 8 &&  fboard[kingLoc.X, kingLoc.Y + 1] == ChessPiece.BlackKing) return true;
+                if (kingLoc.Y + 1 < 8 && fboard[kingLoc.X, kingLoc.Y + 1] == ChessPiece.BlackKing) return true;
                 if (kingLoc.Y - 1 > -1 && fboard[kingLoc.X, kingLoc.Y - 1] == ChessPiece.BlackKing) return true;
                 if (kingLoc.X + 1 < 8 && kingLoc.Y + 1 < 8 && fboard[kingLoc.X + 1, kingLoc.Y + 1] == ChessPiece.BlackKing) return true;
                 if (kingLoc.X + 1 < 8 && kingLoc.Y - 1 > -1 && fboard[kingLoc.X + 1, kingLoc.Y - 1] == ChessPiece.BlackKing) return true;
@@ -731,7 +752,7 @@ namespace StudentAI
 
         private ChessLocation FindKing(ChessBoard board, ChessColor myColor)
         {
-            ChessLocation kingLoc = new ChessLocation(0,0);
+            ChessLocation kingLoc = new ChessLocation(0, 0);
             if (myColor == ChessColor.White)
             {
                 for (int x = 0; x < 8; x++)
@@ -764,7 +785,65 @@ namespace StudentAI
             return kingLoc;
         }
 
+        //Returns the value of the board
+        private int HeuristicBoardValue(ChessBoard currentBoard, ChessMove nextMove, ChessColor color)
+        {
+            int moveValue = 0;
+            int blackValue = 0;
+            int whiteValue = 0;
 
+            ChessBoard tempBoard = currentBoard.Clone();
+
+            tempBoard.MakeMove(nextMove);
+
+            ChessPiece[,] chessPieces = tempBoard.RawBoard;
+
+            foreach (ChessPiece piece in chessPieces)
+            {
+                switch (piece)
+                {
+                    case ChessPiece.BlackPawn:
+                        blackValue += 1;
+                        break;
+                    case ChessPiece.BlackKnight:
+                    case ChessPiece.BlackBishop:
+                        blackValue += 3;
+                        break;
+                    case ChessPiece.BlackRook:
+                        blackValue += 5;
+                        break;
+                    case ChessPiece.BlackQueen:
+                        blackValue += 9;
+                        break;
+                    case ChessPiece.WhitePawn:
+                        whiteValue += 1;
+                        break;
+                    case ChessPiece.WhiteKnight:
+                    case ChessPiece.WhiteBishop:
+                        whiteValue += 3;
+                        break;
+                    case ChessPiece.WhiteRook:
+                        whiteValue += 5;
+                        break;
+                    case ChessPiece.WhiteQueen:
+                        whiteValue += 9;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (color == ChessColor.White)
+            {
+                moveValue = whiteValue - blackValue;
+            }
+            else
+            {
+                moveValue = blackValue - whiteValue;
+            }
+
+            return moveValue;
+        }
 
 
 
