@@ -35,21 +35,26 @@ namespace StudentAI
         {
             List<ChessMove> moves = GetMoves(board, myColor);
 
-            foreach (var move in moves)
+            if (moves.Count == 0)
             {
-                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
+                return new ChessMove(new ChessLocation(99, 99), new ChessLocation(99, 99), ChessFlag.Stalemate);
             }
 
             var bestMove = GreedyMoves(moves, board, myColor);
 
             return bestMove;
 
-
             //throw (new NotImplementedException());
         }
 
-        private ChessMove GreedyMoves(List<ChessMove> moves, ChessBoard board,ChessColor myColor)
+        private ChessMove GreedyMoves(List<ChessMove> moves, ChessBoard board, ChessColor myColor)
         {
+
+            foreach (var move in moves)
+            {
+                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
+            }
+
             // Check for checkmate
             for (int i = 0; i < moves.Count; i++)
             {
