@@ -33,38 +33,61 @@ namespace StudentAI
         /// <returns> Returns the best chess move the player has for the given chess board</returns>
         public ChessMove GetNextMove(ChessBoard board, ChessColor myColor)
         {
-            //for (int x = 0; x < 8; x++)
-            //{
-            //    for (int y = 0; y < 8; y++)
-            //    {
-            //        if (board[x, y] == ChessPiece.WhitePawn)
-            //            return GenMove(board, new ChessLocation(x, y));
-            //    }
-            //}
-
             List<ChessMove> moves = GetMoves(board, myColor);
-            return GreedyMoves(moves);
-            throw (new NotImplementedException());
+
+            foreach (var move in moves)
+            {
+                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
+            }
+
+            var bestMove = GreedyMoves(moves, board, myColor);
+
+            return bestMove;
+
+
+            //throw (new NotImplementedException());
         }
 
-        private ChessMove GreedyMoves(List<ChessMove> moves)
+        private ChessMove GreedyMoves(List<ChessMove> moves, ChessBoard board,ChessColor myColor)
         {
-            ChessMove tempMove = moves.OrderByDescending(move => move.ValueOfMove).First();
-
-            while (visited.Contains(tempMove))
+            // Check for checkmate
+            for (int i = 0; i < moves.Count; i++)
             {
-                moves.Remove(tempMove);
-                tempMove = moves.OrderByDescending(move => move.ValueOfMove).First();
+                var bestMove = moves[i];
+                var fboard = board.Clone();
+                fboard.MakeMove(bestMove);
+                if (myColor == ChessColor.White)
+                {
+                    if (GetMoves(fboard, ChessColor.Black).Count == 0)
+                        moves[i] = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+                }
+                else
+                {
+                    if (GetMoves(fboard, ChessColor.White).Count == 0)
+                        moves[i] = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+                }
             }
 
-            if(visited.Count > 2)
+            List<ChessMove> bestMoves = moves;
+
+            // See if there is a checkmate move
+            var tempMoves = moves.GroupBy(move => move.Flag == ChessFlag.Checkmate).ToList();
+            if (tempMoves.Count > 1)
             {
-                visited.RemoveAt(0);
+                bestMoves = tempMoves[tempMoves.Count - 1].ToList();
+                return bestMoves.First(); // Immediatly return because WE WON BABY!
             }
 
-            visited.Add(tempMove);
+            // Sort by value of move
+            var temp2Moves = bestMoves.GroupBy(move => move.ValueOfMove).ToList();
+            bestMoves = temp2Moves[temp2Moves.Count - 1].ToList();
 
-            return tempMove;
+            //Sort by check moves
+            //var bbestMoves = bestMoves.GroupBy(move => move.Flag == ChessFlag.Check).ToList();
+            //if (bbestMoves.Count > 1)
+            //    bestMoves = bbestMoves[bbestMoves.Count - 1].ToList();
+
+            return bestMoves[random.Next(bestMoves.Count)];
         }
 
         /// <summary>
@@ -382,34 +405,15 @@ namespace StudentAI
             // Checking if enemy king is in check
             for (int i = 0; i < validMoves.Count; i++)
             {
-                var fBoard = board.Clone();
-                fBoard.MakeMove(validMoves[i]);
-                var fMoves = GenMoves(fBoard, validMoves[i].To, myColor);
-
-                var validFMoves = fMoves.Where(fMove => !InCheck(fBoard, fMove, myColor)).ToList();
-
-                foreach (var fMove in fMoves)
+                if (myColor == ChessColor.White)
                 {
-                    if (myColor == ChessColor.White)
-                    {
-                        if (fBoard[fMove.To.X, fMove.To.Y] == ChessPiece.BlackKing)
-                        {
-                            validMoves[i] = new ChessMove(validMoves[i].From, validMoves[i].To, ChessFlag.Check);
-                        }
-                    }
-                    else
-                    {
-                        if (fBoard[fMove.To.X, fMove.To.Y] == ChessPiece.WhiteKing)
-                        {
-                            validMoves[i] = new ChessMove(validMoves[i].From, validMoves[i].To, ChessFlag.Check);
-                        }
-                    }
+                    if (InCheck(board, validMoves[i], ChessColor.Black)) validMoves[i] = new ChessMove(validMoves[i].From, validMoves[i].To, ChessFlag.Check);
+                }
+                else
+                {
+                    if (InCheck(board, validMoves[i], ChessColor.White)) validMoves[i] = new ChessMove(validMoves[i].From, validMoves[i].To, ChessFlag.Check);
                 }
             }
-
-
-            if (validMoves.Count == 0)
-                Math.Abs(9);
 
             return validMoves;
         }
