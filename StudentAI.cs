@@ -53,14 +53,14 @@ namespace StudentAI
 
             //var bestMove = GreedyMoves(moves, board, myColor);
 
-            if(visited.Count > 10)
+            if (visited.Count > 100)
             {
-                visited.RemoveRange(0, 10);
+                visited.RemoveRange(0, 100);
             }
 
             var bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
 
-            while(visited.Contains(bestMove))
+            while (visited.Contains(bestMove) && moves.Count != 0)
             {
                 moves.Remove(bestMove);
                 bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
@@ -123,13 +123,15 @@ namespace StudentAI
 
         private ChessMove MaxValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
         {
-            if(depth > 2 || depth == moves.Count - 1)
+            moves = moves.OrderBy(item => item.ValueOfMove).ToList();
+
+            if (depth > 2 || depth == moves.Count - 1)
             {
                 return moves[depth];
             }
 
-            foreach(ChessMove move in moves)
-            {                
+            foreach (ChessMove move in moves)
+            {
                 if (myColor == ChessColor.White)
                 {
                     if (GetMoves(board, ChessColor.Black).Count == 0)
@@ -165,6 +167,8 @@ namespace StudentAI
 
         private ChessMove MinValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
         {
+            moves = moves.OrderBy(item => item.ValueOfMove).Reverse().ToList();
+
             if (depth > 2 || depth == moves.Count - 1)
             {
                 return moves[depth];
@@ -947,7 +951,7 @@ namespace StudentAI
             return moveValue;
         }
 
-     
+
 
 
 
