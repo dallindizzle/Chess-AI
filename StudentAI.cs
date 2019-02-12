@@ -22,6 +22,12 @@ namespace StudentAI
 #endif
         }
 
+        private int maxValue;
+
+        private ChessMove maxMove = null;
+
+        private ChessMove minMove = null;
+
         private List<ChessMove> visited = new List<ChessMove>();
 
         /// <summary>
@@ -40,7 +46,27 @@ namespace StudentAI
                 return new ChessMove(new ChessLocation(99, 99), new ChessLocation(99, 99), ChessFlag.Stalemate);
             }
 
-            var bestMove = GreedyMoves(moves, board, myColor);
+            foreach (var move in moves)
+            {
+                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
+            }
+
+            //var bestMove = GreedyMoves(moves, board, myColor);
+
+            if(visited.Count > 10)
+            {
+                visited.RemoveRange(0, 10);
+            }
+
+            var bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
+
+            while(visited.Contains(bestMove))
+            {
+                moves.Remove(bestMove);
+                bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
+            }
+
+            visited.Add(bestMove);
 
             return bestMove;
 
@@ -93,6 +119,73 @@ namespace StudentAI
             //    bestMoves = bbestMoves[bbestMoves.Count - 1].ToList();
 
             return bestMoves[random.Next(bestMoves.Count)];
+        }
+
+        private ChessMove MaxValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
+        {
+            if(depth > 2 || depth == moves.Count - 1)
+            {
+                return moves[depth];
+            }
+
+            foreach(ChessMove move in moves)
+            {                
+                if (myColor == ChessColor.White)
+                {
+                    if (GetMoves(board, ChessColor.Black).Count == 0)
+                        return new ChessMove(move.From, move.To, ChessFlag.Checkmate)
+                        {
+                            ValueOfMove = int.MaxValue
+                        };
+                }
+                else
+                {
+                    if (GetMoves(board, ChessColor.White).Count == 0)
+                        return new ChessMove(move.From, move.To, ChessFlag.Checkmate)
+                        {
+                            ValueOfMove = int.MaxValue
+                        };
+                }
+
+                board.MakeMove(move);
+
+                maxValue = Math.Max(MinValue(board, moves, depth + 1, myColor, alpha, beta).ValueOfMove, maxValue);
+
+                if (maxValue >= beta)
+                {
+                    return move;
+                }
+
+                alpha = Math.Max(alpha, maxValue);
+                maxMove = move;
+            }
+
+            return maxMove;
+        }
+
+        private ChessMove MinValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
+        {
+            if (depth > 2 || depth == moves.Count - 1)
+            {
+                return moves[depth];
+            }
+
+            foreach (ChessMove move in moves)
+            {
+                board.MakeMove(move);
+
+                maxValue = Math.Min(MaxValue(board, moves, depth + 1, myColor, alpha, beta).ValueOfMove, maxValue);
+
+                if (maxValue <= alpha)
+                {
+                    return move;
+                }
+
+                beta = Math.Min(beta, maxValue);
+                minMove = move;
+            }
+
+            return minMove;
         }
 
         /// <summary>
@@ -854,7 +947,7 @@ namespace StudentAI
             return moveValue;
         }
 
-
+     
 
 
 
