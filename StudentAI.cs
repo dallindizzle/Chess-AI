@@ -45,7 +45,12 @@ namespace StudentAI
             //Check for Checkmate
             var tempBoard = board.Clone();
             tempBoard.MakeMove(bestMove);
-            if (GetMoves(tempBoard, ChessColor.Black).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+            if (myColor == ChessColor.White)
+            {
+                if (GetMoves(tempBoard, ChessColor.Black).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+            }
+            else if (GetMoves(tempBoard, ChessColor.White).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+
 
             return bestMove;
 
@@ -151,12 +156,25 @@ namespace StudentAI
             {
                 var tempBoard = board.Clone();
                 tempBoard.MakeMove(move);
-                int value = MiniMax(tempBoard, depth - 1, int.MinValue, int.MaxValue, false);
-
-                if (value >= bestMove.ValueOfMove)
+                if (myColor == ChessColor.White)
                 {
-                    bestMove = move;
-                    bestMove.ValueOfMove = value;
+                    int value = MiniMax(tempBoard, depth - 1, int.MinValue, int.MaxValue, false);
+
+                    if (value >= bestMove.ValueOfMove)
+                    {
+                        bestMove = move;
+                        bestMove.ValueOfMove = value;
+                    }
+                }
+                else
+                {
+                    int value = MiniMax(tempBoard, depth - 1, int.MinValue, int.MaxValue, true);
+
+                    if (value < bestMove.ValueOfMove)
+                    {
+                        bestMove = move;
+                        bestMove.ValueOfMove = value;
+                    }
                 }
             }
 
