@@ -22,12 +22,6 @@ namespace StudentAI
 #endif
         }
 
-        private int maxValue;
-
-        private ChessMove maxMove = null;
-
-        private ChessMove minMove = null;
-
         private List<ChessMove> visited = new List<ChessMove>();
 
         /// <summary>
@@ -46,27 +40,12 @@ namespace StudentAI
                 return new ChessMove(new ChessLocation(99, 99), new ChessLocation(99, 99), ChessFlag.Stalemate);
             }
 
-            foreach (var move in moves)
-            {
-                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
-            }
+            var bestMove = MiniMaxRoot(board, myColor, 3);
 
-            //var bestMove = GreedyMoves(moves, board, myColor);
-
-            if (visited.Count > 100)
-            {
-                visited.RemoveRange(0, 100);
-            }
-
-            var bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
-
-            while (visited.Contains(bestMove) && moves.Count != 0)
-            {
-                moves.Remove(bestMove);
-                bestMove = MaxValue(board, moves, 0, myColor, int.MinValue, int.MaxValue);
-            }
-
-            visited.Add(bestMove);
+            //Check for Checkmate
+            var tempBoard = board.Clone();
+            tempBoard.MakeMove(bestMove);
+            if (GetMoves(tempBoard, ChessColor.Black).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
 
             return bestMove;
 
@@ -78,7 +57,7 @@ namespace StudentAI
 
             foreach (var move in moves)
             {
-                move.ValueOfMove = HeuristicBoardValue(board, move, myColor);
+                move.ValueOfMove = HeuristicBoardValue(board, myColor);
             }
 
             // Check for checkmate
@@ -110,8 +89,45 @@ namespace StudentAI
             }
 
             // Sort by value of move
-            var temp2Moves = bestMoves.GroupBy(move => move.ValueOfMove).ToList();
-            bestMoves = temp2Moves[temp2Moves.Count - 1].ToList();
+            var temp2Moves = bestMoves.GroupBy(move => move.ValueOfMove).OrderBy(group => group.Key).ToList();
+
+            int index = temp2Moves.Count();
+
+                
+                do {
+                index--;
+
+                if (index == 0)
+                {
+                    List<ChessMove> pawnMoves = new List<ChessMove>();
+                    foreach (var group in temp2Moves)
+                    {
+                        pawnMoves.AddRange(group.Where(move => board[move.From.X, move.From.Y] == ChessPiece.WhitePawn || board[move.From.X, move.From.Y] == ChessPiece.BlackPawn).ToList());
+                    }
+                    var bestbestMoves = pawnMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
+                    if (bestbestMoves.Count > 0) bestMoves = bestbestMoves;
+                    else
+                    {
+                        if (pawnMoves.Count > 0)
+                        {
+                            bestMoves = pawnMoves.GroupBy(move => move.ValueOfMove).OrderBy(group => group.Key).Last().ToList();
+                        }
+                        else
+                        {
+                            bestMoves = temp2Moves[index].ToList();
+
+                            bestMoves = bestMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
+                        }
+                    }
+                    break;
+                }
+                    
+
+                bestMoves = temp2Moves[index].ToList();
+
+                bestMoves = bestMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
+
+                } while (bestMoves.Count == 0);
 
             //Sort by check moves
             //var bbestMoves = bestMoves.GroupBy(move => move.Flag == ChessFlag.Check).ToList();
@@ -121,75 +137,71 @@ namespace StudentAI
             return bestMoves[random.Next(bestMoves.Count)];
         }
 
-        private ChessMove MaxValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
-        {
-            moves = moves.OrderBy(item => item.ValueOfMove).ToList();
 
-            if (depth > 2 || depth == moves.Count - 1)
-            {
-                return moves[depth];
-            }
+        private ChessMove MiniMaxRoot(ChessBoard board, ChessColor myColor, int depth)
+        {
+            var moves = GetMoves(board, myColor);
+            var bestMove = moves[random.Next(moves.Count)];
+
+            var fboard = board.Clone();
+            fboard.MakeMove(bestMove);
+            bestMove.ValueOfMove = HeuristicBoardValue(fboard, myColor);
 
             foreach (ChessMove move in moves)
             {
-                if (myColor == ChessColor.White)
+                var tempBoard = board.Clone();
+                tempBoard.MakeMove(move);
+                int value = MiniMax(tempBoard, depth - 1, int.MinValue, int.MaxValue, false);
+
+                if (value >= bestMove.ValueOfMove)
                 {
-                    if (GetMoves(board, ChessColor.Black).Count == 0)
-                        return new ChessMove(move.From, move.To, ChessFlag.Checkmate)
-                        {
-                            ValueOfMove = int.MaxValue
-                        };
+                    bestMove = move;
+                    bestMove.ValueOfMove = value;
                 }
-                else
-                {
-                    if (GetMoves(board, ChessColor.White).Count == 0)
-                        return new ChessMove(move.From, move.To, ChessFlag.Checkmate)
-                        {
-                            ValueOfMove = int.MaxValue
-                        };
-                }
-
-                board.MakeMove(move);
-
-                maxValue = Math.Max(MinValue(board, moves, depth + 1, myColor, alpha, beta).ValueOfMove, maxValue);
-
-                if (maxValue >= beta)
-                {
-                    return move;
-                }
-
-                alpha = Math.Max(alpha, maxValue);
-                maxMove = move;
             }
 
-            return maxMove;
+            return bestMove;
+
         }
 
-        private ChessMove MinValue(ChessBoard board, List<ChessMove> moves, int depth, ChessColor myColor, int alpha, int beta)
+        private int MiniMax(ChessBoard board, int depth, int alpha, int beta, bool maximizingPlayer)
         {
-            moves = moves.OrderBy(item => item.ValueOfMove).Reverse().ToList();
+            if (depth == 0) return HeuristicBoardValue(board, ChessColor.White);
 
-            if (depth > 2 || depth == moves.Count - 1)
+            if (maximizingPlayer)
             {
-                return moves[depth];
-            }
+                int maxEval = int.MinValue;
 
-            foreach (ChessMove move in moves)
-            {
-                board.MakeMove(move);
+                var moves = GetMoves(board, ChessColor.White);
 
-                maxValue = Math.Min(MaxValue(board, moves, depth + 1, myColor, alpha, beta).ValueOfMove, maxValue);
-
-                if (maxValue <= alpha)
+                foreach (var move in moves)
                 {
-                    return move;
+                    var child = board.Clone();
+                    child.MakeMove(move);
+                    int eval = MiniMax(child, depth - 1, alpha, beta, false);
+                    maxEval = Math.Max(maxEval, eval);
+                    alpha = Math.Max(alpha, eval);
+                    if (beta <= alpha) break;
                 }
-
-                beta = Math.Min(beta, maxValue);
-                minMove = move;
+                return maxEval;
             }
+            else
+            {
+                int minEval = int.MaxValue;
 
-            return minMove;
+                var moves = GetMoves(board, ChessColor.Black);
+
+                foreach (var move in moves)
+                {
+                    var child = board.Clone();
+                    child.MakeMove(move);
+                    int eval = MiniMax(child, depth - 1, alpha, beta, true);
+                    minEval = Math.Min(minEval, eval);
+                    beta = Math.Min(beta, eval);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
         }
 
         /// <summary>
@@ -462,6 +474,32 @@ namespace StudentAI
 
         private Random random = new Random();
 
+        private bool IsSuicide(ChessBoard board, ChessMove move, ChessColor myColor)
+        {
+            if (myColor == ChessColor.White)
+            {
+                if (InCheck(board, move, myColor, move.To))
+                {
+                    if (board[move.From.X, move.From.Y] == ChessPiece.WhiteQueen) return true;
+                    if (board[move.To.X, move.To.Y] == ChessPiece.Empty) return true;
+
+                    if (board[move.From.X, move.From.Y] == ChessPiece.WhitePawn)
+                    {
+                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn) return true;
+                    }
+                    else if (board[move.From.X, move.From.Y] == ChessPiece.WhiteKnight || board[move.From.X, move.From.Y] == ChessPiece.WhiteBishop)
+                    {
+                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn || board[move.To.X, move.To.Y] == ChessPiece.BlackKnight || board[move.To.X, move.To.Y] == ChessPiece.BlackBishop) return true;
+                    }
+                    else if (board[move.From.X, move.From.Y] == ChessPiece.WhiteRook)
+                    {
+                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn || board[move.To.X, move.To.Y] == ChessPiece.BlackKnight || board[move.To.X, move.To.Y] == ChessPiece.BlackBishop || board[move.To.X, move.To.Y] == ChessPiece.BlackRook) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         private List<ChessLocation> GetPieces(ChessBoard board, ChessColor myColor)
         {
             List<ChessLocation> pieces = new List<ChessLocation>();
@@ -532,7 +570,7 @@ namespace StudentAI
                 if (y - 1 > -1 && board[x, y - 1] == ChessPiece.Empty)
                 {
                     potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 1)));
-                    if (y == 6 && board[x, y - 2] == ChessPiece.Empty && board[x, y + 1] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 2)));
+                    if (y == 6 && board[x, y - 2] == ChessPiece.Empty && board[x, y - 1] == ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x, y - 2)));
                 }
                 if (x - 1 > -1 && y - 1 > -1 && board[x - 1, y - 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x - 1, y - 1)));
                 if (x + 1 < 8 && y - 1 > -1 && board[x + 1, y - 1] < ChessPiece.Empty) potMoves.Add(new ChessMove(new ChessLocation(x, y), new ChessLocation(x + 1, y - 1)));
@@ -669,11 +707,21 @@ namespace StudentAI
 
 
         // Returns true if with the move made, the king will be in check
-        private bool InCheck(ChessBoard board, ChessMove move, ChessColor myColor)
+        private bool InCheck(ChessBoard board, ChessMove move, ChessColor myColor, ChessLocation piece = null)
         {
             var fboard = board.Clone(); // Future board. board if the move is made. MAKE SURE TO USE THIS BOARD IN THIS METHOD!!!
             fboard.MakeMove(move);
-            ChessLocation kingLoc = FindKing(fboard, myColor);
+
+            ChessLocation kingLoc;
+
+            if (piece == null)
+            {
+                kingLoc = FindKing(fboard, myColor);
+            }
+            else
+            {
+                kingLoc = piece;
+            }
 
             if (myColor == ChessColor.White)
             {
@@ -892,63 +940,55 @@ namespace StudentAI
         }
 
         //Returns the value of the board
-        private int HeuristicBoardValue(ChessBoard currentBoard, ChessMove nextMove, ChessColor color)
+        private int HeuristicBoardValue(ChessBoard currentBoard, ChessColor color)
         {
-            int moveValue = 0;
-            int blackValue = 0;
-            int whiteValue = 0;
+            int val = 0;
 
-            ChessBoard tempBoard = currentBoard.Clone();
-
-            tempBoard.MakeMove(nextMove);
-
-            ChessPiece[,] chessPieces = tempBoard.RawBoard;
+            ChessPiece[,] chessPieces = currentBoard.RawBoard;
 
             foreach (ChessPiece piece in chessPieces)
             {
                 switch (piece)
                 {
                     case ChessPiece.BlackPawn:
-                        blackValue += 1;
+                        val += -10;
                         break;
                     case ChessPiece.BlackKnight:
                     case ChessPiece.BlackBishop:
-                        blackValue += 3;
+                        val += -30;
                         break;
                     case ChessPiece.BlackRook:
-                        blackValue += 5;
+                        val += -50;
                         break;
                     case ChessPiece.BlackQueen:
-                        blackValue += 9;
+                        val += -90;
+                        break;
+                    case ChessPiece.BlackKing:
+                        val += -40;
                         break;
                     case ChessPiece.WhitePawn:
-                        whiteValue += 1;
+                        val += 10;
                         break;
                     case ChessPiece.WhiteKnight:
                     case ChessPiece.WhiteBishop:
-                        whiteValue += 3;
+                        val += 30;
                         break;
                     case ChessPiece.WhiteRook:
-                        whiteValue += 5;
+                        val += 50;
                         break;
                     case ChessPiece.WhiteQueen:
-                        whiteValue += 9;
+                        val += 90;
                         break;
+                    case ChessPiece.WhiteKing:
+                        val += 40;
+                        break;
+
                     default:
                         break;
                 }
             }
 
-            if (color == ChessColor.White)
-            {
-                moveValue = whiteValue - blackValue;
-            }
-            else
-            {
-                moveValue = blackValue - whiteValue;
-            }
-
-            return moveValue;
+            return val;
         }
 
 
