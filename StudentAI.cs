@@ -22,8 +22,6 @@ namespace StudentAI
 #endif
         }
 
-        private List<ChessMove> visited = new List<ChessMove>();
-
         /// <summary>
         /// Evaluates the chess board and decided which move to make. This is the main method of the AI.
         /// The framework will call this method when it's your turn.
@@ -33,7 +31,9 @@ namespace StudentAI
         /// <returns> Returns the best chess move the player has for the given chess board</returns>
         public ChessMove GetNextMove(ChessBoard board, ChessColor myColor)
         {
+
             List<ChessMove> moves = GetMoves(board, myColor);
+
 
             if (moves.Count == 0)
             {
@@ -51,7 +51,6 @@ namespace StudentAI
             }
             else if (GetMoves(tempBoard, ChessColor.White).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
 
-
             return bestMove;
 
             //throw (new NotImplementedException());
@@ -62,7 +61,7 @@ namespace StudentAI
 
             foreach (var move in moves)
             {
-                move.ValueOfMove = HeuristicBoardValue(board, myColor);
+                move.ValueOfMove = HeuristicBoardValue(board);
             }
 
             // Check for checkmate
@@ -96,43 +95,6 @@ namespace StudentAI
             // Sort by value of move
             var temp2Moves = bestMoves.GroupBy(move => move.ValueOfMove).OrderBy(group => group.Key).ToList();
 
-            int index = temp2Moves.Count();
-
-                
-                do {
-                index--;
-
-                if (index == 0)
-                {
-                    List<ChessMove> pawnMoves = new List<ChessMove>();
-                    foreach (var group in temp2Moves)
-                    {
-                        pawnMoves.AddRange(group.Where(move => board[move.From.X, move.From.Y] == ChessPiece.WhitePawn || board[move.From.X, move.From.Y] == ChessPiece.BlackPawn).ToList());
-                    }
-                    var bestbestMoves = pawnMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
-                    if (bestbestMoves.Count > 0) bestMoves = bestbestMoves;
-                    else
-                    {
-                        if (pawnMoves.Count > 0)
-                        {
-                            bestMoves = pawnMoves.GroupBy(move => move.ValueOfMove).OrderBy(group => group.Key).Last().ToList();
-                        }
-                        else
-                        {
-                            bestMoves = temp2Moves[index].ToList();
-
-                            bestMoves = bestMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
-                        }
-                    }
-                    break;
-                }
-                    
-
-                bestMoves = temp2Moves[index].ToList();
-
-                bestMoves = bestMoves.Where(move => !IsSuicide(board, move, myColor)).ToList();
-
-                } while (bestMoves.Count == 0);
 
             //Sort by check moves
             //var bbestMoves = bestMoves.GroupBy(move => move.Flag == ChessFlag.Check).ToList();
@@ -150,7 +112,7 @@ namespace StudentAI
 
             var fboard = board.Clone();
             fboard.MakeMove(bestMove);
-            bestMove.ValueOfMove = HeuristicBoardValue(fboard, myColor);
+            bestMove.ValueOfMove = HeuristicBoardValue(fboard);
 
             foreach (ChessMove move in moves)
             {
@@ -184,7 +146,7 @@ namespace StudentAI
 
         private int MiniMax(ChessBoard board, int depth, int alpha, int beta, bool maximizingPlayer)
         {
-            if (depth == 0) return HeuristicBoardValue(board, ChessColor.White);
+            if (depth == 0) return HeuristicBoardValue(board);
 
             if (maximizingPlayer)
             {
@@ -491,32 +453,6 @@ namespace StudentAI
 
 
         private Random random = new Random();
-
-        private bool IsSuicide(ChessBoard board, ChessMove move, ChessColor myColor)
-        {
-            if (myColor == ChessColor.White)
-            {
-                if (InCheck(board, move, myColor, move.To))
-                {
-                    if (board[move.From.X, move.From.Y] == ChessPiece.WhiteQueen) return true;
-                    if (board[move.To.X, move.To.Y] == ChessPiece.Empty) return true;
-
-                    if (board[move.From.X, move.From.Y] == ChessPiece.WhitePawn)
-                    {
-                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn) return true;
-                    }
-                    else if (board[move.From.X, move.From.Y] == ChessPiece.WhiteKnight || board[move.From.X, move.From.Y] == ChessPiece.WhiteBishop)
-                    {
-                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn || board[move.To.X, move.To.Y] == ChessPiece.BlackKnight || board[move.To.X, move.To.Y] == ChessPiece.BlackBishop) return true;
-                    }
-                    else if (board[move.From.X, move.From.Y] == ChessPiece.WhiteRook)
-                    {
-                        if (board[move.To.X, move.To.Y] == ChessPiece.BlackPawn || board[move.To.X, move.To.Y] == ChessPiece.BlackKnight || board[move.To.X, move.To.Y] == ChessPiece.BlackBishop || board[move.To.X, move.To.Y] == ChessPiece.BlackRook) return true;
-                    }
-                }
-            }
-            return false;
-        }
 
         private List<ChessLocation> GetPieces(ChessBoard board, ChessColor myColor)
         {
@@ -958,58 +894,146 @@ namespace StudentAI
         }
 
         //Returns the value of the board
-        private int HeuristicBoardValue(ChessBoard currentBoard, ChessColor color)
+        private int HeuristicBoardValue(ChessBoard board)
         {
             int val = 0;
 
-            ChessPiece[,] chessPieces = currentBoard.RawBoard;
-
-            foreach (ChessPiece piece in chessPieces)
+            int bx = 7;
+            for (int x = 0; x < 7; x++)
             {
-                switch (piece)
+                int by = 7;
+                for (int y = 0; y < 7; y++)
                 {
-                    case ChessPiece.BlackPawn:
-                        val += -10;
-                        break;
-                    case ChessPiece.BlackKnight:
-                    case ChessPiece.BlackBishop:
-                        val += -30;
-                        break;
-                    case ChessPiece.BlackRook:
-                        val += -50;
-                        break;
-                    case ChessPiece.BlackQueen:
-                        val += -90;
-                        break;
-                    case ChessPiece.BlackKing:
-                        val += -40;
-                        break;
-                    case ChessPiece.WhitePawn:
-                        val += 10;
-                        break;
-                    case ChessPiece.WhiteKnight:
-                    case ChessPiece.WhiteBishop:
-                        val += 30;
-                        break;
-                    case ChessPiece.WhiteRook:
-                        val += 50;
-                        break;
-                    case ChessPiece.WhiteQueen:
-                        val += 90;
-                        break;
-                    case ChessPiece.WhiteKing:
-                        val += 40;
-                        break;
-
-                    default:
-                        break;
+                    switch(board[x,y])
+                    {
+                        case ChessPiece.BlackPawn:
+                            val += -100;
+                            val += -PawnTable[by, bx];
+                            break;
+                        case ChessPiece.BlackKnight:
+                            val += -320;
+                            val += -KnightTable[by, bx];
+                            break;
+                        case ChessPiece.BlackBishop:
+                            val += -330;
+                            val += -BishopTable[by, bx];
+                            break;
+                        case ChessPiece.BlackRook:
+                            val += -500;
+                            val += -RookTable[by, bx];
+                            break;
+                        case ChessPiece.BlackQueen:
+                            val += -900;
+                            val += -QueenTable[by, bx];
+                            break;
+                        case ChessPiece.BlackKing:
+                            val += -20000;
+                            val += -KingTable[by, bx];
+                            break;
+                        case ChessPiece.WhitePawn:
+                            val += 100;
+                            val += PawnTable[y, x];
+                            break;
+                        case ChessPiece.WhiteKnight:
+                            val += 320;
+                            val += KnightTable[y, x];
+                            break;
+                        case ChessPiece.WhiteBishop:
+                            val += 330;
+                            val += BishopTable[y, x];
+                            break;
+                        case ChessPiece.WhiteRook:
+                            val += 500;
+                            val += RookTable[y, x];
+                            break;
+                        case ChessPiece.WhiteQueen:
+                            val += 900;
+                            val += QueenTable[y, x];
+                            break;
+                        case ChessPiece.WhiteKing:
+                            val += 20000;
+                            val += KingTable[y, x];
+                            break;
+                    }
+                    by--;
                 }
+                bx--;
             }
 
             return val;
         }
 
+        private static readonly short[,] PawnTable = new short[,]
+        {
+             { 0,  0,  0,  0,  0,  0, 0,  0 },
+            { 50, 50, 50, 50, 50, 50, 50, 50 },
+            { 10, 10, 20, 30, 30, 20, 10, 10 },
+             { 5,  5, 10, 27, 27, 10,  5,  5 },
+             { 0,  0,  0, 25, 25,  0,  0,  0 },
+             { 5, -5,-10,  0,  0,-10, -5,  5 },
+             { 5, 10, 10,-25,-25, 10, 10,  5 },
+             { 0,  0,  0,  0,  0,  0,  0,  0 }
+        };
 
+        private static readonly short[,] KnightTable = new short[,]
+        {
+            { -50,-40,-30,-30,-30,-30,-40,-50 },
+            { -40,-20,  0,  0,  0,  0,-20,-40},
+            { -30,  0, 10, 15, 15, 10,  0,-30 },
+            { -30,  5, 15, 20, 20, 15,  5,-30 },
+            { -30,  0, 15, 20, 20, 15,  0,-30 },
+            { -30,  5, 10, 15, 15, 10,  5,-30 },
+            { -40,-20,  0,  5,  5,  0,-20,-40 },
+            { -50,-40,-20,-30,-30,-20,-40,-50 }
+        };
+
+        private static readonly short[,] BishopTable = new short[,]
+        {
+            { -20,-10,-10,-10,-10,-10,-10,-20 },
+            { -10,  0,  0,  0,  0,  0,  0,-10 },
+            { -10,  0,  5, 10, 10,  5,  0,-10 },
+            { -10,  5,  5, 10, 10,  5,  5,-10 },
+            { -10,  0, 10, 10, 10, 10,  0,-10 },
+            { -10, 10, 10, 10, 10, 10, 10,-10 },
+            { -10,  5,  0,  0,  0,  0,  5,-10 },
+            { -20,-10,-40,-10,-10,-40,-10,-20 },
+        };
+
+        private static readonly short[,] RookTable = new short[,]
+        {
+            { 0 ,0, 0, 0, 0, 0, 0, 0 },
+            { 5,  10,  10,  10,  10,  10,  10, 5 },
+            { -5,  0,  0, 0, 0,  0,  0, -5 },
+            { -5,  0,  0, 0, 0,  0,  0, -5 },
+            { -5,  0, 0, 0, 0, 10,  0, -5 },
+            { -5, 0, 0, 0, 0, 0, 0, -5 },
+            { -5,  0,  0,  0,  0,  0,  5, -5 },
+            { 0, 0, 0, 5, 5, 5, 0, 0 },
+        };
+
+        private static readonly short[,] KingTable = new short[,]
+        {
+          { -30, -40, -40, -50, -50, -40, -40, -30 },
+          { -30, -40, -40, -50, -50, -40, -40, -30 },
+          { -30, -40, -40, -50, -50, -40, -40, -30 },
+          { -30, -40, -40, -50, -50, -40, -40, -30 },
+          { -20, -30, -30, -40, -40, -30, -30, -20 },
+          { -10, -20, -20, -20, -20, -20, -20, -10 },
+           { 20,  20,   0,   0,   0,   0,  20,  20 },
+           { 20,  30,  10,   0,   0,  10,  30,  20 }
+        };
+
+        private static readonly short[,] QueenTable = new short[,]
+        {
+            {-20, -10, -10, -5, -5, -10, -10, -20 },
+            {-10, 0, 0, 0, 0, 0, 0, -10 },
+            {-10, 0, 5, 5, 5, 5, 0, -10 },
+            {-5, 0, 5, 5, 5, 5, 0, -5 },
+            {0, 0, 5, 5, 5, 5, 0, -5 },
+            {-10, 5, 5, 5, 5, 5, 0, -10 },
+            {-10, 0, 5, 0, 0, 0, 0, -10 },
+            {-10, -10, -10, -5, -5, -10, -10, -20 }
+        };
 
 
 
