@@ -908,27 +908,27 @@ namespace StudentAI
                     {
                         case ChessPiece.BlackPawn:
                             val += -100;
-                            val += -PawnTable[by, bx];
+                            val += -PawnTable[by, x];
                             break;
                         case ChessPiece.BlackKnight:
                             val += -320;
-                            val += -KnightTable[by, bx];
+                            val += -KnightTable[by, x];
                             break;
                         case ChessPiece.BlackBishop:
                             val += -330;
-                            val += -BishopTable[by, bx];
+                            val += -BishopTable[by, x];
                             break;
                         case ChessPiece.BlackRook:
                             val += -500;
-                            val += -RookTable[by, bx];
+                            val += -RookTable[by, x];
                             break;
                         case ChessPiece.BlackQueen:
                             val += -900;
-                            val += -QueenTable[by, bx];
+                           val += -QueenTable[by, x];
                             break;
                         case ChessPiece.BlackKing:
                             val += -20000;
-                            val += -KingTable[by, bx];
+                            val += -KingTable[by, x];
                             break;
                         case ChessPiece.WhitePawn:
                             val += 100;
