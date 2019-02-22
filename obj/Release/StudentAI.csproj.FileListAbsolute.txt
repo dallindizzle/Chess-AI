@@ -1,0 +1,7 @@
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\Framework\bin\Release\StudentAI.dll
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\Framework\bin\Release\StudentAI.pdb
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Release\StudentAI.csprojAssemblyReference.cache
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Release\StudentAI.csproj.CoreCompileInputs.cache
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Release\StudentAI.csproj.CopyComplete
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Release\StudentAI.dll
+C:\Users\dcs37\Documents\CS4470\uvschess\uvschess\StudentAI\obj\Release\StudentAI.pdb

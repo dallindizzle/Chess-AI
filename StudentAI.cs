@@ -16,11 +16,13 @@ namespace StudentAI
         public string Name
         {
 #if DEBUG
-            get { return "Group 12 (Debug)"; }
+            get { return "Group 12"; }
 #else
             get { return "Group 12"; }
 #endif
         }
+
+        int movesCount = 0;
 
         /// <summary>
         /// Evaluates the chess board and decided which move to make. This is the main method of the AI.
@@ -31,6 +33,33 @@ namespace StudentAI
         /// <returns> Returns the best chess move the player has for the given chess board</returns>
         public ChessMove GetNextMove(ChessBoard board, ChessColor myColor)
         {
+
+            if (myColor == ChessColor.White)
+            {
+                if (movesCount == 0 && board[1, 7] == ChessPiece.WhiteKnight)
+                {
+                    movesCount++;
+                    return new ChessMove(new ChessLocation(1, 7), new ChessLocation(2, 5));
+                }
+                if (movesCount == 1 && board[6, 7] == ChessPiece.WhiteKnight)
+                {
+                    movesCount++;
+                    return new ChessMove(new ChessLocation(6, 7), new ChessLocation(5, 5));
+                }
+            }
+            else
+            {
+                if (movesCount == 0 && board[1, 0] == ChessPiece.BlackKnight)
+                {
+                    movesCount++;
+                    return new ChessMove(new ChessLocation(1, 0), new ChessLocation(2, 2));
+                }
+                if (movesCount == 1 && board[6, 0] == ChessPiece.BlackKnight)
+                {
+                    movesCount++;
+                    return new ChessMove(new ChessLocation(6, 0), new ChessLocation(5, 2));
+                }
+            }
 
             List<ChessMove> moves = GetMoves(board, myColor);
 
@@ -50,6 +79,8 @@ namespace StudentAI
                 if (GetMoves(tempBoard, ChessColor.Black).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
             }
             else if (GetMoves(tempBoard, ChessColor.White).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+
+            movesCount++;
 
             return bestMove;
 
@@ -72,12 +103,12 @@ namespace StudentAI
                 fboard.MakeMove(bestMove);
                 if (myColor == ChessColor.White)
                 {
-                    if (GetMoves(fboard, ChessColor.Black).Count == 0)
+                    if (GetMoves(fboard, ChessColor.Black).Count == 0 && moves[i].Flag == ChessFlag.Check)
                         moves[i] = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
                 }
                 else
                 {
-                    if (GetMoves(fboard, ChessColor.White).Count == 0)
+                    if (GetMoves(fboard, ChessColor.White).Count == 0 && moves[i].Flag == ChessFlag.Check)
                         moves[i] = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
                 }
             }
@@ -101,6 +132,7 @@ namespace StudentAI
             //if (bbestMoves.Count > 1)
             //    bestMoves = bbestMoves[bbestMoves.Count - 1].ToList();
 
+            movesCount++;
             return bestMoves[random.Next(bestMoves.Count)];
         }
 
@@ -132,7 +164,7 @@ namespace StudentAI
                 {
                     int value = MiniMax(tempBoard, depth - 1, int.MinValue, int.MaxValue, true);
 
-                    if (value < bestMove.ValueOfMove)
+                    if (value <= bestMove.ValueOfMove)
                     {
                         bestMove = move;
                         bestMove.ValueOfMove = value;
@@ -908,23 +940,23 @@ namespace StudentAI
                     {
                         case ChessPiece.BlackPawn:
                             val += -100;
-                            val += -PawnTable[by, x];
+                            val += -PawnTable[by, bx];
                             break;
                         case ChessPiece.BlackKnight:
                             val += -320;
-                            val += -KnightTable[by, x];
+                            val += -KnightTable[by, bx];
                             break;
                         case ChessPiece.BlackBishop:
                             val += -330;
-                            val += -BishopTable[by, x];
+                            val += -BishopTable[by, bx];
                             break;
                         case ChessPiece.BlackRook:
                             val += -500;
-                            val += -RookTable[by, x];
+                            val += -RookTable[by, bx];
                             break;
                         case ChessPiece.BlackQueen:
-                            val += -900;
-                           val += -QueenTable[by, x];
+                            val += -1200;
+                           val += -QueenTable[by, bx];
                             break;
                         case ChessPiece.BlackKing:
                             val += -20000;
@@ -947,7 +979,7 @@ namespace StudentAI
                             val += RookTable[y, x];
                             break;
                         case ChessPiece.WhiteQueen:
-                            val += 900;
+                            val += 1200;
                             val += QueenTable[y, x];
                             break;
                         case ChessPiece.WhiteKing:
