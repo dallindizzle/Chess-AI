@@ -76,9 +76,9 @@ namespace StudentAI
             tempBoard.MakeMove(bestMove);
             if (myColor == ChessColor.White)
             {
-                if (GetMoves(tempBoard, ChessColor.Black).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+                if (GetMoves(tempBoard, ChessColor.Black).Count == 0 && bestMove.Flag == ChessFlag.Check) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
             }
-            else if (GetMoves(tempBoard, ChessColor.White).Count == 0) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
+            else if (GetMoves(tempBoard, ChessColor.White).Count == 0 && bestMove.Flag == ChessFlag.Check) bestMove = new ChessMove(bestMove.From, bestMove.To, ChessFlag.Checkmate);
 
             movesCount++;
 
@@ -140,11 +140,13 @@ namespace StudentAI
         private ChessMove MiniMaxRoot(ChessBoard board, ChessColor myColor, int depth)
         {
             var moves = GetMoves(board, myColor);
-            var bestMove = moves[random.Next(moves.Count)];
-
-            var fboard = board.Clone();
-            fboard.MakeMove(bestMove);
-            bestMove.ValueOfMove = HeuristicBoardValue(fboard);
+            var bestMove = new ChessMove(new ChessLocation(99, 99), new ChessLocation(99, 99));
+            //var fboard = board.Clone();
+            //fboard.MakeMove(bestMove);
+            if (myColor == ChessColor.White)
+                bestMove.ValueOfMove = int.MinValue;
+            else
+                bestMove.ValueOfMove = int.MaxValue;
 
             foreach (ChessMove move in moves)
             {
@@ -191,6 +193,7 @@ namespace StudentAI
                     var child = board.Clone();
                     child.MakeMove(move);
                     int eval = MiniMax(child, depth - 1, alpha, beta, false);
+
                     maxEval = Math.Max(maxEval, eval);
                     alpha = Math.Max(alpha, eval);
                     if (beta <= alpha) break;
@@ -208,6 +211,7 @@ namespace StudentAI
                     var child = board.Clone();
                     child.MakeMove(move);
                     int eval = MiniMax(child, depth - 1, alpha, beta, true);
+
                     minEval = Math.Min(minEval, eval);
                     beta = Math.Min(beta, eval);
                     if (beta <= alpha) break;
@@ -931,10 +935,10 @@ namespace StudentAI
             int val = 0;
 
             int bx = 7;
-            for (int x = 0; x < 7; x++)
+            for (int x = 0; x < 8; x++)
             {
                 int by = 7;
-                for (int y = 0; y < 7; y++)
+                for (int y = 0; y < 8; y++)
                 {
                     switch(board[x,y])
                     {
@@ -955,8 +959,8 @@ namespace StudentAI
                             val += -RookTable[by, bx];
                             break;
                         case ChessPiece.BlackQueen:
-                            val += -1200;
-                           val += -QueenTable[by, bx];
+                            val += -900;
+                            val += -QueenTable[by, bx];
                             break;
                         case ChessPiece.BlackKing:
                             val += -20000;
@@ -979,7 +983,7 @@ namespace StudentAI
                             val += RookTable[y, x];
                             break;
                         case ChessPiece.WhiteQueen:
-                            val += 1200;
+                            val += 900;
                             val += QueenTable[y, x];
                             break;
                         case ChessPiece.WhiteKing:
